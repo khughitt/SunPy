@@ -11,46 +11,29 @@ import matplotlib.cbook as cbook
 import matplotlib.cm as cm
 from sunpy.cm import _cm
 
-sdoaia94 = _cm.aia_color_table(94)
-sdoaia131 = _cm.aia_color_table(131)
-sdoaia171 = _cm.aia_color_table(171)
-sdoaia193 = _cm.aia_color_table(193)
-sdoaia211 = _cm.aia_color_table(211)
-sdoaia304 = _cm.aia_color_table(304)
-sdoaia335 = _cm.aia_color_table(335)
-sdoaia1600 = _cm.aia_color_table(1600)
-sdoaia1700 = _cm.aia_color_table(1700)
-sdoaia4500 = _cm.aia_color_table(4500)
+cmlist = {}
+_aia_wavelengths = [94, 131, 171, 193, 211, 304, 335, 1600, 1700, 4500]
+_eit_wavelengths = [171, 195, 284, 304]
 
-sohoeit171 = _cm.eit_color_table(171)
-sohoeit195 = _cm.eit_color_table(195)
-sohoeit284 = _cm.eit_color_table(284)
-sohoeit304 = _cm.eit_color_table(304)
+# AIA
+for wl in _aia_wavelengths:
+    name = "sdoaia" + str(wl)
+    cmlist[name] = colors.LinearSegmentedColormap(name, _cm.aia_color_table(wl))
 
-cmlist = {
-          'sdoaia94': sdoaia94,
-          'sdoaia131': sdoaia131,
-          'sdoaia171': sdoaia171,
-          'sdoaia193': sdoaia193,
-          'sdoaia211': sdoaia211,
-          'sdoaia304': sdoaia304,
-          'sdoaia335': sdoaia335,
-          'sdoaia1600': sdoaia1600,
-          'sdoaia1700': sdoaia1700,
-          'sdoaia4500': sdoaia4500,
-          'sohoeit171': sohoeit171,
-          'sohoeit195': sohoeit195,
-          'sohoeit284': sohoeit284,
-          'sohoeit304': sohoeit304,
-          'rhessi': cm.jet #pylint: disable=E1101
-          }
+# EIT
+for wl in _eit_wavelengths:
+    name = "sohoeit" + str(wl)
+    cmlist[name] = colors.LinearSegmentedColormap(name, _cm.eit_color_table(wl))
+    
+# RHESSI
+cmlist['rhessi'] = cm.jet #pylint: disable=E1101
 
-def get_cmap(name='sdoaia94'):
+def get_cmap(cmap='sdoaia94'):
     """Get a colormap instance."""
-    if name in cmlist:
-        return cmlist.get(name)
+    if cmap in cmlist:
+        return cmlist.get(cmap)
     else:
-        raise ValueError("Colormap %s is not recognized" % name)
+        raise ValueError("Colormap %s is not recognized" % cmap)
 
 def show_colormaps():
     """Displays custom color maps supported in SunPy"""

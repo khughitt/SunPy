@@ -6,7 +6,6 @@ and a dictionary of these dictionaries.
 """
 
 import numpy as np
-import matplotlib.colors as colors
 
 # FIXME: Give me a proper name.
 def _mkx(i, steps, n):
@@ -66,7 +65,7 @@ def aia_color_table(wavelength):
     )
     
     #@NOTE - What about setting N=2**16, etc? //khughitt 2011-10-07  
-    return colors.LinearSegmentedColormap('mytable', cdict)
+    return cdict
 
 eit_yellow_r = np.array([0,1,2,3,5,6,7,8,10,11,12,14,15,16,17,19,20,21,22,24,25,26,28,29,30,31,33,34,35,36
 ,38,39,40,42,43,44,45,47,48,49,51,52,53,54,56,57,58,59,61,62,63,65,66,67,68,70,71,72,73,75
@@ -177,4 +176,4 @@ def eit_color_table(wavelength):
         for el, name in [(r, 'red'),  (g, 'green'), (b, 'blue')]
     )
     
-    return colors.LinearSegmentedColormap('mytable', cdict)
+    return cdict
