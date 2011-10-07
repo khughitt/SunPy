@@ -4,6 +4,7 @@ This module provides a set of colormaps specific to solar data (e.g. SDO/AIA
 color maps), functions for getting a colormap by name.
 """
 
+import sys
 import numpy as np
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
@@ -28,12 +29,18 @@ for wl in _eit_wavelengths:
 # RHESSI
 cmlist['rhessi'] = cm.jet #pylint: disable=E1101
 
-def get_cmap(name='aia94'):
+# Make accessible directly from module
+for k, v in cmlist.items():
+    setattr(sys.modules[__name__], k, v)
+
+def get_cmap(name):
     """Get a colormap instance."""
     if name in cmlist:
         return cmlist.get(name)
     else:
         raise ValueError("Colormap %s is not recognized" % name)
+    
+#def get_adaptive_cmap():
 
 def show_colormaps():
     """Displays custom color maps supported in SunPy"""
