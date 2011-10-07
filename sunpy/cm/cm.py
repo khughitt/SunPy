@@ -41,7 +41,7 @@ def get_cmap(name):
     else:
         raise ValueError("Colormap %s is not recognized" % name)
     
-def get_adaptive_cmap(data, cmap=cm.gray, N=256, vmin=None, vmax=None, 
+def get_adaptive_cmap(data, cmap, N=256, vmin=None, vmax=None, 
                       log=False, scale_factor=1.5):
     """Returns an optimized colormap for the specified data.
     
@@ -82,9 +82,9 @@ def get_adaptive_cmap(data, cmap=cm.gray, N=256, vmin=None, vmax=None,
     """
     # Applying clipping and log scaling if applicable
     if vmin is not None:
-        data = data.clip(vmin)
+        data = data.clip(min=vmin)
     if vmax is not None:
-        data = data.clip(None, vmax)
+        data = data.clip(max=vmax)
 
     if log:
         bins = _get_frequent_values(np.log(data.clip(1)), N, scale_factor)
@@ -100,6 +100,16 @@ def get_adaptive_cmap(data, cmap=cm.gray, N=256, vmin=None, vmax=None,
 def _adjust_cmap_indices(cmap, indices, N):
     """Creates a copy of a color map with the same interpolation values but
     new indices.
+    
+    NOTE 2011/10/07
+    
+    Currently this only supports adjusting values for colormaps with an equal
+    number of indices. In order to support other colormaps (e.g. cm.gray) a
+    function would need to be provided to map from the colormaps _segmentdata
+    to the range of the input indices.
+    
+    To extend this to work with mpl colormaps, look into scipy.interpolate and
+    matplotlib.colors.makeMappingArray.
     """
     name = cmap.name
     new_cmap = {"red": [], "green": [], "blue": []}
@@ -118,6 +128,10 @@ def _adjust_cmap_indices(cmap, indices, N):
         new_cmap['blue'].append(bval)
         
         i += 1
+        
+    # cmap values must range from 0 to 1
+    new_cmap['red'][0] = new_cmap['green'][0] = new_cmap['blue'][0] = (0, 0, 0)
+    new_cmap['red'][-1] = new_cmap['green'][-1] = new_cmap['blue'][-1] = (1, 1, 1)
         
     return colors.LinearSegmentedColormap(name + "_adaptive", new_cmap, N)
     
@@ -158,7 +172,7 @@ def _get_frequent_values(data, N, scale_factor):
     hist, bins = zip(*x[:N])    
     
     # Return bins in ascending order
-    return sorted(bins)
+    return np.array(sorted(bins))
 
 def test_equalize():
     '''Test'''
@@ -185,3 +199,8 @@ def test_equalize():
     pylab.imshow(im, cmap=histeq_cmap)
     pylab.title('histeq')
     pylab.show()
+    
+if __name__ == "__main__":
+    import sunpy
+    aia = sunpy.Map(sunpy.AIA_171_IMAGE)
+    cmap = sunpy.cm.get_adaptive_cmap(aia, sunpy.cm.aia171, vmin=0, vmax=2000, scale_factor=1.5, log=True)
