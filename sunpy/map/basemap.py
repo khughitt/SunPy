@@ -326,6 +326,7 @@ class BaseMap(np.ndarray):
             "norm": self.norm()
         }
         params.update(matplot_args)
+
         if gamma is not None:
             params['cmap'] = copy(params['cmap'])
             params['cmap'].set_gamma(gamma)
@@ -341,7 +342,7 @@ class BaseMap(np.ndarray):
         """Default normalizion method"""
         return None
     
-    def show(self, overlays=[], draw_limb=False, gamma=1.0, **matplot_args):
+    def show(self, overlays=[], draw_limb=False, gamma=None, **matplot_args):
         """Displays map on screen. Arguments are same as plot()."""
         self.plot(overlays, draw_limb, gamma, **matplot_args).show()
 

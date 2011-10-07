@@ -65,6 +65,7 @@ def aia_color_table(wavelength):
         for el, name in [(r, 'red'),  (g, 'green'), (b, 'blue')]
     )
     
+    #@NOTE - What about setting N=2**16, etc? //khughitt 2011-10-07  
     return colors.LinearSegmentedColormap('mytable', cdict)
 
 eit_yellow_r = np.array([0,1,2,3,5,6,7,8,10,11,12,14,15,16,17,19,20,21,22,24,25,26,28,29,30,31,33,34,35,36

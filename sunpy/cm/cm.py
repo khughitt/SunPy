@@ -71,6 +71,120 @@ def show_colormaps():
                  horizontalalignment='right')
 
     plt.show()
+    
+#
+# Things to try:
+#   use sub-sampling to speed up histogram generation
+#
+def adaptive_cmap(data, N=256, vmin=None, vmax=None, log=False, scale_factor=2):
+    """Creates a custom log-scaled color map scaled to the specified image data.
+    
+    In order increase contrast in those pixel ranges which occur
+    frequently a histogram is created for the log of the data and
+    those values which occur most often are given unique colors.
+    
+    The method needs to be tested on other AIA, etc. data. For the sample
+    image the color maps generated tend favor detail in the corona.
+    
+    So far little tweaking has been done though and there are probably
+    things that could improved. Feel free to try!
+       
+    Parameters
+    ----------
+    data : numpy.ndarray
+        Image data
+    N    : int
+        Number of colors to use for the color map
+    vmin : int
+        Minimum data clip value
+    vmax : int
+        Maximum data clip value
+    log  : bool
+        Whether or not to scale the data logarithmically during cmap creation
+    scale_factor : float
+        Scale factor to use when spreading out the histogram across the color
+        map. Should be greater than 1, otherwise no optimization will be
+        performed.
+    
+    Returns
+    -------
+    out : matplotlib.colors.LinearSegmentedColormap
+        A grayscale color map normalized to the image data
+        
+    Examples
+    --------
+    >>> map = sunpy.Map(sunpy.AIA_171_IMAGE)
+    >>> cmap = adaptive_cmap(map)
+    >>> map.plot(cmap=cmap)    
+    """
+    
+    # Applying clipping and log scaling if applicable
+    if vmin is not None:
+        data = data.clip(vmin)
+    if vmax is not None:
+        data = data.clip(None, vmax)
+
+    if log:
+        bins = _get_frequent_values(np.log(data.clip(1)), N, scale_factor)
+        bins = np.exp(bins)
+    else:
+        bins = _get_frequent_values(data, N, scale_factor)
+
+    # Scale from 0 to 1
+    bins = bins / data.max() 
+    
+    # Create a matplotlib-formatted color dictionary
+    cdict = _generate_cdict_for_indices(bins, N)
+    
+    return colors.LinearSegmentedColormap('automap', cdict, N)
+
+def _generate_cdict_for_indices(indices, cmap_size):
+    """Converts a list of indice values to an RGB color dictionary needed 
+       to generate a linear segmented colormap
+       
+       See: http://matplotlib.sourceforge.net/api/colors_api.html
+    """
+    step = 1. / cmap_size
+    cdict = {'red': [], 'green': [], 'blue': []}
+    
+    value = 0
+    
+    for i in indices:
+        cmap_value = (i, value, value)
+        cdict['red'].append(cmap_value)
+        cdict['green'].append(cmap_value)
+        cdict['blue'].append(cmap_value)
+        value += step
+        
+    # cmap values must range from 0 to 1
+    cdict['red'][0] = cdict['green'][0] = cdict['blue'][0] = (0, 0, 0)
+    cdict['red'][-1] = cdict['green'][-1] = cdict['blue'][-1] = (1, 1, 1)
+    
+    # convert rgb lists to tuples
+    cdict['red'] = tuple(cdict['red'])
+    cdict['green'] = tuple(cdict['green'])
+    cdict['blue'] = tuple(cdict['blue'])
+
+    return cdict
+
+def _get_frequent_values(data, N, scale_factor):
+    """
+    Gets a histogram of the image using a specified bin size that is greater
+    than the number of color map indices (N). A sorted list of the N most
+    frequent bins is then returned.
+    """
+    # Create a histogram
+    hist, bins = np.histogram(data, bins=int(N * scale_factor))
+    
+    # Sort bins by frequency
+    x = zip(hist, bins)
+    x.sort(reverse=True)
+    
+    # Unzip and keep only the N most frequently occuring values
+    hist, bins = zip(*x[:N])    
+    
+    # Return bins in ascending order
+    return sorted(bins)
 
 def test_equalize():
     '''Test'''
@@ -97,6 +211,3 @@ def test_equalize():
     pylab.imshow(im, cmap=histeq_cmap)
     pylab.title('histeq')
     pylab.show()
-
-if __name__ == '__main__':
-    test_equalize()
