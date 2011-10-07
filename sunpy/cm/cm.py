@@ -17,23 +17,23 @@ _eit_wavelengths = [171, 195, 284, 304]
 
 # AIA
 for wl in _aia_wavelengths:
-    name = "sdoaia" + str(wl)
-    cmlist[name] = colors.LinearSegmentedColormap(name, _cm.aia_color_table(wl))
+    key = "aia" + str(wl)
+    cmlist[key] = colors.LinearSegmentedColormap(key, _cm.aia_color_table(wl))
 
 # EIT
 for wl in _eit_wavelengths:
-    name = "sohoeit" + str(wl)
-    cmlist[name] = colors.LinearSegmentedColormap(name, _cm.eit_color_table(wl))
+    key = "eit" + str(wl)
+    cmlist[key] = colors.LinearSegmentedColormap(key, _cm.eit_color_table(wl))
     
 # RHESSI
 cmlist['rhessi'] = cm.jet #pylint: disable=E1101
 
-def get_cmap(cmap='sdoaia94'):
+def get_cmap(name='aia94'):
     """Get a colormap instance."""
-    if cmap in cmlist:
-        return cmlist.get(cmap)
+    if name in cmlist:
+        return cmlist.get(name)
     else:
-        raise ValueError("Colormap %s is not recognized" % cmap)
+        raise ValueError("Colormap %s is not recognized" % name)
 
 def show_colormaps():
     """Displays custom color maps supported in SunPy"""
