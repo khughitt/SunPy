@@ -42,7 +42,7 @@ def get_cmap(name):
     else:
         raise ValueError("Colormap %s is not recognized" % name)
     
-def get_adaptive_cmap(data, cmap, N=256, vmin=None, vmax=None, 
+def get_adaptive_cmap(data, cmap=None, N=256, vmin=None, vmax=None, 
                       log=False, scale_factor=1.5):
     """Returns an optimized colormap for the specified data.
     
@@ -94,9 +94,16 @@ def get_adaptive_cmap(data, cmap, N=256, vmin=None, vmax=None,
         bins = _get_frequent_values(data, N, scale_factor)
 
     # Scale from 0 to 1
-    bins = bins / data.max() 
+    bins = bins / data.max()
     
-    return _adjust_cmap_indices(cmap, bins, N)
+    # Default to a grayscale cmap
+    if cmap is None:
+        cdict = _generate_cdict_for_indices(bins, N)
+        return colors.LinearSegmentedColormap("gray_adaptive", cdict, N)
+    
+    # Or use specified cmap as a base
+    else:
+        return _adjust_cmap_indices(cmap, bins, N)
 
 def _adjust_cmap_indices(cmap, indices, N):
     """Creates a copy of a color map with the same interpolation values but
@@ -109,9 +116,8 @@ def _adjust_cmap_indices(cmap, indices, N):
     name = cmap.name
     new_cmap = {"red": [], "green": [], "blue": []}
     
-    cdict = cmap._segmentdata #pylint: disable=W0212
-    
-    # If the segment data doesn't include N indices, interpolate
+    # Get original segment data and interpolate if needed
+    cdict = _interpolate_cmap_indices(cmap._segmentdata, N) #pylint: disable=W0212
 
     i = 0
     for index in indices:
@@ -132,7 +138,29 @@ def _adjust_cmap_indices(cmap, indices, N):
         
     return colors.LinearSegmentedColormap(name + "_adaptive", new_cmap, N)
 
-def _interpolate_cmap_indices(cdict, indices, N):
+def _generate_cdict_for_indices(indices, N):
+    """Converts a list of indice values to an RGB color dictionary needed 
+       to generate a linear segmented colormap
+       
+       See: http://matplotlib.sourceforge.net/api/colors_api.html
+    """
+    x0 = np.linspace(0, 1, N)
+    cmap_values = zip(indices, x0, x0)
+    
+    cdict = {'red': cmap_values, 'green': cmap_values, 'blue': cmap_values}    
+        
+    # cmap values must range from 0 to 1
+    cdict['red'][0] = cdict['green'][0] = cdict['blue'][0] = (0, 0, 0)
+    cdict['red'][-1] = cdict['green'][-1] = cdict['blue'][-1] = (1, 1, 1)
+    
+    # convert rgb lists to tuples
+    cdict['red'] = tuple(cdict['red'])
+    cdict['green'] = tuple(cdict['green'])
+    cdict['blue'] = tuple(cdict['blue'])
+
+    return cdict
+
+def _interpolate_cmap_indices(cdict, N):
     """Expands the input indices into N values"""
     new_cdict = {"red": [], "green": [], "blue": []}
    
@@ -143,13 +171,14 @@ def _interpolate_cmap_indices(cdict, indices, N):
             
             # Interpolate up to N indices
             new_cdict[color] = tuple(zip(
-                                         util.interpolate(x, N),
-                                         util.interpolate(y0, N),
-                                         util.interpolate(y1, N)
+                                         tuple(util.interpolate(x, N)),
+                                         tuple(util.interpolate(y0, N)),
+                                         tuple(util.interpolate(y1, N))
                                          ))
         else:
             new_cdict[color] = cdict[color]
-    
+            
+    return new_cdict
 
 def show_colormaps():
     """Displays custom color maps supported in SunPy"""
@@ -218,5 +247,7 @@ def test_equalize():
     
 if __name__ == "__main__":
     import sunpy
+    from matplotlib import cm
     aia = sunpy.Map(sunpy.AIA_171_IMAGE)
-    cmap = sunpy.cm.get_adaptive_cmap(aia, sunpy.cm.aia171, vmin=0, vmax=2000, scale_factor=1.5, log=True)
+    #cmap = sunpy.cm.get_adaptive_cmap(aia, sunpy.cm.aia171, vmin=0, vmax=2000, scale_factor=1.5, log=True)
+    cmap = sunpy.cm.get_adaptive_cmap(aia, cm.jet)
