@@ -173,17 +173,27 @@ def unique(itr, key=None):
                 yield elem
                 items.add(x)
                 
+def _interpolate(lst, n):
+    size, rem = divmod(n, len(lst) - 1)
+    if size == 0:
+        raise ValueError("n smaller than len(lst)")
+    
+    for n, (a, b) in enumerate(zip(lst, lst[1:])):
+        last = n == len(lst) - 2
+        yield np.linspace(a, b, size + bool(rem), endpoint=last)
+        if rem > 0:
+            rem -= 1
+
+
 def interpolate(lst, n=100):
     """Creates list of n values which are linearly interpolated using the input
     list as anchor points. 
     
     Author: florian.mayer@bitsrc.org
     """
+    if len(lst) == n:
+        return lst[:]
+    
     from itertools import chain #pylint: disable=W0404
-
-    c = int(float(n) / (len(lst) - 1))
-    itr, itr2 = iter(lst), iter(lst)
-    itr2.next()
-    return list(
-        chain.from_iterable(np.linspace(a, b, c, endpoint=False) for a, b in zip(itr, itr2))
-    )
+    
+    return list(chain.from_iterable(_interpolate(lst, n)))
