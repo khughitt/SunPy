@@ -9,6 +9,7 @@ import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import matplotlib.cbook as cbook
 import matplotlib.cm as cm
+from sunpy.util import util
 from sunpy.cm import _cm
 
 #pylint: disable=E1101
@@ -76,9 +77,9 @@ def get_adaptive_cmap(data, cmap, N=256, vmin=None, vmax=None,
         
     Examples
     --------
-    >>> map = sunpy.Map(sunpy.AIA_171_IMAGE)
-    >>> cmap = adaptive_cmap(map)
-    >>> map.plot(cmap=cmap)   
+    >>> aia = sunpy.Map(sunpy.AIA_171_IMAGE)
+    >>> cmap = adaptive_cmap(aia, sunpy.cm.aia171)
+    >>> map.plot(cmap=cmap)
     """
     # Applying clipping and log scaling if applicable
     if vmin is not None:
@@ -101,20 +102,16 @@ def _adjust_cmap_indices(cmap, indices, N):
     """Creates a copy of a color map with the same interpolation values but
     new indices.
     
-    NOTE 2011/10/07
-    
-    Currently this only supports adjusting values for colormaps with an equal
-    number of indices. In order to support other colormaps (e.g. cm.gray) a
-    function would need to be provided to map from the colormaps _segmentdata
-    to the range of the input indices.
-    
-    To extend this to work with mpl colormaps, look into scipy.interpolate and
-    matplotlib.colors.makeMappingArray.
+    Unsupported:
+        - colormaps with > N indices
+        - colormaps which use functions instead of tuples for rgb indices
     """
     name = cmap.name
     new_cmap = {"red": [], "green": [], "blue": []}
     
     cdict = cmap._segmentdata #pylint: disable=W0212
+    
+    # If the segment data doesn't include N indices, interpolate
 
     i = 0
     for index in indices:
@@ -134,7 +131,26 @@ def _adjust_cmap_indices(cmap, indices, N):
     new_cmap['red'][-1] = new_cmap['green'][-1] = new_cmap['blue'][-1] = (1, 1, 1)
         
     return colors.LinearSegmentedColormap(name + "_adaptive", new_cmap, N)
+
+def _interpolate_cmap_indices(cdict, indices, N):
+    """Expands the input indices into N values"""
+    new_cdict = {"red": [], "green": [], "blue": []}
+   
+    for color in cdict.keys():
+        if len(cdict[color]) != N:
+            # Get the original values
+            x, y0, y1 = zip(*cdict[color])
+            
+            # Interpolate up to N indices
+            new_cdict[color] = tuple(zip(
+                                         util.interpolate(x, N),
+                                         util.interpolate(y0, N),
+                                         util.interpolate(y1, N)
+                                         ))
+        else:
+            new_cdict[color] = cdict[color]
     
+
 def show_colormaps():
     """Displays custom color maps supported in SunPy"""
     maps = sorted(cmlist)
