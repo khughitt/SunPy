@@ -172,3 +172,18 @@ def unique(itr, key=None):
             if x not in items:
                 yield elem
                 items.add(x)
+                
+def interpolate(lst, n=100):
+    """Creates list of n values which are linearly interpolated using the input
+    list as anchor points. 
+    
+    Author: florian.mayer@bitsrc.org
+    """
+    from itertools import chain #pylint: disable=W0404
+
+    c = int(float(n) / (len(lst) - 1))
+    itr, itr2 = iter(lst), iter(lst)
+    itr2.next()
+    return list(
+        chain.from_iterable(np.linspace(a, b, c, endpoint=False) for a, b in zip(itr, itr2))
+    )
