@@ -28,6 +28,10 @@
 # Load all of the global Astropy configuration
 from astropy.sphinx.conf import *
 
+# Load Runnotebook extension
+import os, sys
+sys.path.insert(0, os.path.abspath('extensions'))
+extensions += ['notebook_sphinxext']
 
 # -- General configuration ----------------------------------------------------
 

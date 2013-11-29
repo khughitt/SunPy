@@ -6,6 +6,7 @@ SunPy Documentation
     
   sunpy/guide/index.rst
   sunpy/api/index.rst
+  sunpy/gallery/index.rst
   sunpy/dev
   sunpy/cite
   sunpy/resources

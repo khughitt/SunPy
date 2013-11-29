@@ -23,5 +23,5 @@ docs
 .coverage
 htmlcov
 result.xml
-
+.ipynb_checkpoints
 sunpy/version.py
